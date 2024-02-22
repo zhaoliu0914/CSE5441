@@ -40,7 +40,7 @@ do
         do
             #Run the program
             (time ./a.out $consumers < $input) &> output/$program-$input-output-$consumers.txt
-            validate_output=`python validate.py $PWD $program $input $consumers`
+            validate_output=`python3 validate.py "$PWD" $program $input $consumers`
             echo $validate_output
             if [[ "$(echo $validate_output | grep "Failure" | wc -l)" != "0" ]]; then
                 success=0
