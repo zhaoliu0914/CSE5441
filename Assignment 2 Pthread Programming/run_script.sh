@@ -36,7 +36,7 @@ do
         echo "Running $program with $input"
         echo "====================================="
         #Run the program with different number of consumers
-        for consumers in 2 4 6 8
+        for consumers in 2 4 6 8 10 12 14 16 18 20 22 24 26
         do
             #Run the program
             (time ./a.out $consumers < $input) &> output/$program-$input-output-$consumers.txt

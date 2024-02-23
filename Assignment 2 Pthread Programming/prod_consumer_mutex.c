@@ -92,6 +92,13 @@ void buffer_init(void) {
     pthread_mutex_init(&mutexKey, NULL);
 }
 
+/*
+ * update global array buffer[] and variable location.
+ *
+ * @param operation
+ * @param number
+ * @param locationNumberArr
+ */
 void update_buffer(char operation, int number, int *locationNumberArr){
     // Lock a mutex before updating buffer[] and location
     pthread_mutex_lock(&mutexKey);
