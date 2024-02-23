@@ -34,6 +34,7 @@
 #include <assert.h>             /* assert() */
 #include <signal.h>             /* signal() */
 #include <alloca.h>             /* alloca() */
+#include <stdbool.h>            /* bool     */
 #include <pthread.h>
 
 void print_insertion(int number, int location) {
@@ -92,22 +93,18 @@ void buffer_init(void) {
     pthread_mutex_init(&mutexKey, NULL);
 }
 
-/*
- * update global array buffer[] and variable location.
- *
- * @param operation
- * @param number
- * @param locationNumberArr
- */
-void update_buffer(char operation, int number, int *locationNumberArr){
-    // Lock a mutex before updating buffer[] and location
-    pthread_mutex_lock(&mutexKey);
+void buffer_insert(int number) {
+    bool isContinue = true;
+    int insertedLocation = -10;
 
-    if (operation == 'i') {
+    while(isContinue){
+        // Lock a mutex before updating buffer[] and location
+        pthread_mutex_lock(&mutexKey);
+
         if(location < MAX_BUF_SIZE){
             if(number != -1 || location == 0){
-                locationNumberArr[0] = location;
-                locationNumberArr[1] = number;
+                isContinue = false;
+                insertedLocation = location;
 
                 // Insert number to buffer[] at specific location
                 buffer[location] = number;
@@ -127,11 +124,11 @@ void update_buffer(char operation, int number, int *locationNumberArr){
                 }
 
                 if(index == -10){
-                    locationNumberArr[0] = location;
-                    locationNumberArr[1] = number;
+                    isContinue = false;
+                    insertedLocation = location;
                 }else{
-                    locationNumberArr[0] = 0;
-                    locationNumberArr[1] = number;
+                    isContinue = false;
+                    insertedLocation = 0;
 
                     int temp = buffer[index];
                     buffer[index] = buffer[location];
@@ -141,12 +138,29 @@ void update_buffer(char operation, int number, int *locationNumberArr){
                 // Increase location
                 location++;
             }
-        }else{
-            locationNumberArr[0] = -10;
-            locationNumberArr[1] = number;
         }
 
-    } else {
+        // Unlock it after updating buffer[] and location
+        pthread_mutex_unlock(&mutexKey);
+
+        if(isContinue){
+            usleep(10000);
+        }
+    }
+
+    print_insertion(number, insertedLocation);
+}
+
+int buffer_extract(int consumerno) {
+    int number = -1;
+
+    bool isContinue = true;
+    int extractedLocation = -10;
+
+    while(isContinue){
+        // Lock a mutex before updating buffer[] and location
+        pthread_mutex_lock(&mutexKey);
+
         if(location > 0){
             // Decrease location
             location--;
@@ -154,49 +168,19 @@ void update_buffer(char operation, int number, int *locationNumberArr){
             // Extract number from buffer[] at specific location
             number = buffer[location];
 
-            locationNumberArr[0] = location;
-            locationNumberArr[1] = number;
-        }else{
-            locationNumberArr[0] = -10;
-            locationNumberArr[1] = number;
+            isContinue = false;
+            extractedLocation = location;
+        }
+
+        // Unlock it after updating buffer[] and location
+        pthread_mutex_unlock(&mutexKey);
+
+        if(isContinue){
+            usleep(10000);
         }
     }
 
-    // Unlock it after updating buffer[] and location
-    pthread_mutex_unlock(&mutexKey);
-}
-
-void buffer_insert(int number) {
-    //int location = -1;
-
-    int locationNumberArr[2] = {0};
-
-    update_buffer('i', number, locationNumberArr);
-    while(locationNumberArr[0] < 0){
-        usleep(10000);
-
-        update_buffer('i', number, locationNumberArr);
-    }
-
-    print_insertion(number, locationNumberArr[0]);
-}
-
-int buffer_extract(int consumerno) {
-    int number = -1;
-    //int location = -1;
-
-    int locationNumberArr[2] = {0};
-
-    update_buffer('e', -10, locationNumberArr);
-    while(locationNumberArr[0] < 0){
-        usleep(10000);
-
-        update_buffer('e', -10, locationNumberArr);
-    }
-
-    number = locationNumberArr[1];
-
-    print_extraction(consumerno, number, locationNumberArr[0]);
+    print_extraction(consumerno, number, extractedLocation);
 
     return number;                   /* FIX ME */
 }
@@ -330,6 +314,7 @@ int main(int argc, char *argv[]) {
         assert(test == 0);
     }
 
+    // cleanup the buffer, any mutex/condition variables
     buffer_clean();
 
     return(0);
