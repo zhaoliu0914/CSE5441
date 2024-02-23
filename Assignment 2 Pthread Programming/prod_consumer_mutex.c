@@ -144,7 +144,7 @@ void buffer_insert(int number) {
         pthread_mutex_unlock(&mutexKey);
 
         if(isContinue){
-            usleep(10000);
+            usleep(100);
         }
     }
 
@@ -176,7 +176,7 @@ int buffer_extract(int consumerno) {
         pthread_mutex_unlock(&mutexKey);
 
         if(isContinue){
-            usleep(10000);
+            usleep(100);
         }
     }
 

@@ -92,7 +92,8 @@ pthread_cond_t conditionKey;
 void buffer_init(void) {
     //printf("buffer_init called: doing nothing\n"); /* FIX ME */
     pthread_mutex_init(&mutexKey, NULL);
-    pthread_cond_init (&conditionKey, NULL);
+    pthread_cond_init(&conditionKey, NULL);
+    //pthread_cond_init(&conditionEmpty, NULL);
 }
 
 void buffer_insert(int number) {
@@ -102,8 +103,6 @@ void buffer_insert(int number) {
     while(isContinue){
         // Lock a mutex before updating buffer[] and location
         pthread_mutex_lock(&mutexKey);
-
-        pthread_cond_wait(&conditionKey, &mutexKey);
 
         if(location < MAX_BUF_SIZE){
             if(number != -1 || location == 0){
@@ -142,14 +141,14 @@ void buffer_insert(int number) {
                 // Increase location
                 location++;
             }
+
+            pthread_cond_broadcast(&conditionKey);
+        }else{
+            pthread_cond_wait(&conditionKey, &mutexKey);
         }
 
         // Unlock it after updating buffer[] and location
         pthread_mutex_unlock(&mutexKey);
-
-        if(isContinue){
-            usleep(10000);
-        }
     }
 
     print_insertion(number, insertedLocation);
@@ -174,16 +173,14 @@ int buffer_extract(int consumerno) {
 
             isContinue = false;
             extractedLocation = location;
-        }else{
+
             pthread_cond_signal(&conditionKey);
+        }else{
+            pthread_cond_wait(&conditionKey, &mutexKey);
         }
 
         // Unlock it after updating buffer[] and location
         pthread_mutex_unlock(&mutexKey);
-
-        if(isContinue){
-            usleep(10000);
-        }
     }
 
     print_extraction(consumerno, number, extractedLocation);
@@ -195,6 +192,7 @@ void buffer_clean(void) {
     //printf("buffer_clean called: doing nothing\n"); /* FIX ME */
     pthread_mutex_destroy(&mutexKey);
     pthread_cond_destroy(&conditionKey);
+    //pthread_cond_destroy(&conditionEmpty);
     pthread_exit(NULL);
 }
 
