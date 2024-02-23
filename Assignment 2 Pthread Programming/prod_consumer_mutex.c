@@ -329,5 +329,8 @@ int main(int argc, char *argv[]) {
 
         assert(test == 0);
     }
+
+    buffer_clean();
+
     return(0);
 }

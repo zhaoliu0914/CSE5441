@@ -41,7 +41,7 @@ void print_insertion(int number, int location) {
 }
 
 void print_extraction(int consumerno, int number, int location) {
-	printf("consumer %d extract %d from %d\n", consumerno, number, location);
+    printf("consumer %d extract %d from %d\n", consumerno, number, location);
 }
 
 /**************************************************************************\
@@ -82,27 +82,132 @@ void print_extraction(int consumerno, int number, int location) {
 /* DO NOT change MAX_BUF_SIZE */
 #define MAX_BUF_SIZE    10
 
+int buffer[MAX_BUF_SIZE] = {0};
+int location = 0;
+
+pthread_mutex_t mutexKey;
+pthread_cond_t conditionKey;
+
 void buffer_init(void) {
-    printf("buffer_init called: doing nothing\n"); /* FIX ME */
+    //printf("buffer_init called: doing nothing\n"); /* FIX ME */
+    pthread_mutex_init(&mutexKey, NULL);
+    pthread_cond_init (&conditionKey, NULL);
+}
+
+/*
+ * update global array buffer[] and variable location.
+ *
+ * @param operation
+ * @param number
+ * @param locationNumberArr
+ */
+void update_buffer(char operation, int number, int *locationNumberArr){
+    // Lock a mutex before updating buffer[] and location
+    pthread_mutex_lock(&mutexKey);
+
+    if (operation == 'i') {
+        if(location < MAX_BUF_SIZE){
+            if(number != -1 || location == 0){
+                locationNumberArr[0] = location;
+                locationNumberArr[1] = number;
+
+                // Insert number to buffer[] at specific location
+                buffer[location] = number;
+                // Increase location
+                location++;
+            }else{
+                buffer[location] = number;
+
+                // Insert -1 to buffer[0]
+                int index = -10;
+                for(int i=0; i<=location; i++){
+                    int temp = buffer[i];
+                    if(temp > 0){
+                        index = i;
+                        break;
+                    }
+                }
+
+                if(index == -10){
+                    locationNumberArr[0] = location;
+                    locationNumberArr[1] = number;
+                }else{
+                    locationNumberArr[0] = 0;
+                    locationNumberArr[1] = number;
+
+                    int temp = buffer[index];
+                    buffer[index] = buffer[location];
+                    buffer[location] = temp;
+                }
+
+                // Increase location
+                location++;
+            }
+        }else{
+            locationNumberArr[0] = -10;
+            locationNumberArr[1] = number;
+        }
+
+    } else {
+        if(location > 0){
+            // Decrease location
+            location--;
+
+            // Extract number from buffer[] at specific location
+            number = buffer[location];
+
+            locationNumberArr[0] = location;
+            locationNumberArr[1] = number;
+        }else{
+            locationNumberArr[0] = -10;
+            locationNumberArr[1] = number;
+        }
+    }
+
+    // Unlock it after updating buffer[] and location
+    pthread_mutex_unlock(&mutexKey);
 }
 
 void buffer_insert(int number) {
-    int location = -1;
+    //int location = -1;
 
-    print_insertion(number, location);
+    int locationNumberArr[2] = {0};
+
+    update_buffer('i', number, locationNumberArr);
+    while(locationNumberArr[0] < 0){
+        usleep(10000);
+
+        update_buffer('i', number, locationNumberArr);
+    }
+
+    print_insertion(number, locationNumberArr[0]);
 }
 
 int buffer_extract(int consumerno) {
     int number = -1;
-    int location = -1;
+    //int location = -1;
 
-    print_extraction(consumerno, number, location);
+    int locationNumberArr[2] = {0};
+
+    update_buffer('e', -10, locationNumberArr);
+    while(locationNumberArr[0] < 0){
+        usleep(10000);
+
+        update_buffer('e', -10, locationNumberArr);
+    }
+
+    number = locationNumberArr[1];
+
+    print_extraction(consumerno, number, locationNumberArr[0]);
 
     return number;                   /* FIX ME */
 }
 
-void buffer_clean(void){
-    printf("buffer_clean called: doing nothing\n"); /* FIX ME */
+void buffer_clean(void) {
+    //printf("buffer_clean called: doing nothing\n"); /* FIX ME */
+    pthread_mutex_destroy(&mutexKey);
+    pthread_cond_destroy(&conditionKey);
+    pthread_exit(NULL);
 }
 
 /**************************************************************************\
@@ -206,9 +311,9 @@ int main(int argc, char *argv[]) {
     consumers = (pthread_t *)alloca(nconsumers * sizeof(pthread_t));
     for (kount = 0; kount < nconsumers; kount++) {
         int test = pthread_create(&consumers[kount], /* pthread number */
-                NULL,            /* "attributes" (unused) */
-                consumer_thread, /* procedure */
-                (void *)(intptr_t)kount);  /* hack: consumer number */
+                                  NULL,            /* "attributes" (unused) */
+                                  consumer_thread, /* procedure */
+                                  (void *)(intptr_t)kount);  /* hack: consumer number */
 
         assert(test == 0);
     }
@@ -227,5 +332,8 @@ int main(int argc, char *argv[]) {
 
         assert(test == 0);
     }
+
+    // cleanup the buffer, any mutex/condition variables
+    buffer_clean();
     return(0);
 }
