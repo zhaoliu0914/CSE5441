@@ -17,19 +17,36 @@ void main ()
 
 #pragma omp parallel shared(a,b,c,d) private(i)
     {
+        int numberThreads = omp_get_num_threads();
+        int threadNumber = omp_get_thread_num();
+        printf("numberThreads = %d threadNumber = %d\n", numberThreads, threadNumber);
 
 #pragma omp sections nowait
         {
 
 #pragma omp section
-            for (i=0; i < N; i++)
-                c[i] = a[i] + b[i];
+            {
+                threadNumber = omp_get_thread_num();
+                printf("threadNumber = %d, running section code\n", threadNumber);
+
+                for (i=0; i < N; i++)
+                    c[i] = a[i] + b[i];
+            }
+
 
 #pragma omp section
-            for (i=0; i < N; i++)
-                d[i] = a[i] * b[i];
+            {
+                threadNumber = omp_get_thread_num();
+                printf("threadNumber = %d, running section code\n", threadNumber);
+
+                for (i=0; i < N; i++)
+                    d[i] = a[i] * b[i];
+            }
+
 
         }  /* end of sections */
+
+
 
     }  /* end of parallel section */
 }

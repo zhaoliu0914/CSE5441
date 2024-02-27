@@ -1,5 +1,5 @@
 /******************************************************************************
-* FILE: omp_hello.c
+* FILE: omp_hello_lastprivate.c
 * DESCRIPTION:
 *   OpenMP Example - Hello World - C/C++ Version
 *   In this simple example, the master thread forks a parallel region.
@@ -14,28 +14,14 @@
 
 int main (int argc, char *argv[])
 {
-    int nthreads = -1, tid = -1;
-    int commonValue = 10;
-
-#pragma omp thread
+    int i = 0;
+    int n = 0;
 
     /* Fork a team of threads giving them their own copies of variables */
-#pragma omp parallel private(nthreads, tid) shared(commonValue)
-    {
-        printf("Initial: TID = %d, Number of threads = %d, commonValue = %d\n", tid, nthreads, commonValue);
-
-        /* Obtain thread number */
-        tid = omp_get_thread_num();
-        printf("Hello World from thread = %d\n", tid);
-
-        /* Only master thread does this */
-        if (tid == 0)
-        {
-            nthreads = omp_get_num_threads();
-            printf("Number of threads = %d\n", nthreads);
-        }
-
+#pragma omp parallel for lastprivate(n)
+    for (i = 0; i < 10; ++i) {
+        n = i;
     }  /* All threads join master thread and disband */
 
-    printf("Final: TID = %d, Number of threads = %d\n", tid, nthreads);
+    printf("Final: n = %d\n", n);
 }
