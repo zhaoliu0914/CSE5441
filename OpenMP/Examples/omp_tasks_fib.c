@@ -2,16 +2,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int fib (int n)
-{
+int fib (int n) {
     int x, y;
 
     if (n < 2) return n;
+#pragma omp parallel
+    {
+        int tid = omp_get_thread_num();
+        printf("TID: %d \n", tid);
+
 #pragma omp task shared(x)
-    x = fib(n-1);
+    x = fib(n - 1);
 #pragma omp task shared(y)
-    y = fib(n-2);
+    y = fib(n - 2);
 #pragma omp taskwait
+}
     return x + y;
 }
 

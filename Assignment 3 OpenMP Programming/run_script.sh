@@ -14,7 +14,7 @@ for program in prod_consumer_omp
 do
     echo "Build $program"
     #Compile the code with only mutex
-    gcc -fopenmp $program.c &> _comp_output
+    gcc-13 -fopenmp $program.c &> _comp_output
 
     #Check for successful completion of the program
     if [ "$?" != 0 ]
@@ -43,7 +43,7 @@ do
             do
                 #Run the program
                 (time ./a.out $producers $consumers < $input) &> output/$program-$input-output-$producers-$consumers.txt
-                validate_output=`python validate.py $PWD $program $input $producers $consumers`
+                validate_output=`python validate.py "$PWD" $program $input $producers $consumers`
                 echo "$validate_output"
                 if [[ "$(echo $validate_output | grep "Failure" | wc -l)" != "0" ]]; then
                     success=0
