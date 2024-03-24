@@ -38,15 +38,11 @@
 #include <stdbool.h>
 
 void print_insertion(int producerno, int number, int location) {
-    fflush(stdout);
     printf("producer %d inserting %d at location %d\n", producerno, number, location);
-    fflush(stdout);
 }
 
 void print_extraction(int consumerno, int number, int location) {
-    fflush(stdout);
 	printf("consumer %d extracting %d from location %d\n", consumerno, number, location);
-    fflush(stdout);
 }
 
 /**************************************************************************\
@@ -166,25 +162,20 @@ void consumer(int nproducers, int nconsumers)
     int number = -1;
     int consumerno = -1;
 
-    for (consumerno = 0; consumerno < nconsumers; consumerno++) {
-        #pragma omp task firstprivate(number)
+    consumerno = omp_get_thread_num();
+    if(consumerno < nconsumers) {
+        printf("consumer %d: starting\n", consumerno);
+        while (1)
         {
-            printf("consumer %d: starting\n", consumerno);
-            fflush(stdout);
-            while (1)
-            {
-                number = extract_data(consumerno);
+            number = extract_data(consumerno);
 
-                if (number < 0)
-                    break;
+            if (number < 0)
+                break;
 
-                //usleep(10 * number);  /* "interpret" command for development */
-                usleep(100000 * number);  /* "interpret" command for submission */
-                fflush(stdout);
-            }
-            printf("consumer %d: exiting\n", consumerno);
-            fflush(stdout);
+            //usleep(10 * number);  /* "interpret" command for development */
+            usleep(100000 * number);  /* "interpret" command for submission */
         }
+        printf("consumer %d: exiting\n", consumerno);
     }
 
     return;
@@ -208,40 +199,32 @@ void producer(int nproducers, int nconsumers)
     char buffer[MAXLINELEN];
     int number = -1;
 
-    #pragma omp taskgroup
-    {
-        for (producerno = 0; producerno < nproducers; producerno++) {
-            #pragma omp task firstprivate(buffer, number)
-            {
-                printf("producer %d: starting\n", producerno);
-                fflush(stdout);
+    producerno = omp_get_thread_num();
+    if(producerno >= nconsumers) {
+        printf("producer %d: starting\n", producerno);
 
-                while (fgets(buffer, MAXLINELEN, stdin) != NULL)
-                {
-                    number = atoi(buffer);
-                    insert_data(producerno, number);
-                }
-
-                printf("producer %d: exiting\n", producerno);
-                fflush(stdout);
-            }
+        while (fgets(buffer, MAXLINELEN, stdin) != NULL)
+        {
+            number = atoi(buffer);
+            insert_data(producerno, number);
         }
-    }
 
-//#pragma omp taskwait
+        printf("producer %d: exiting\n", producerno);
+    }
 
     /* For simplicity, you can make it so that only one producer inserts the
      * "-1" to all the consumers. However, if you are able to create a logic to
      * distribute this among the producer threads, that is also fine. */
-    printf("producer: read EOF, sending %d '-1' numbers\n", nconsumers);
-    fflush(stdout);
 
-    for (i = 0; i < nconsumers; i++) {
-        insert_data(-1, -1);
+    if(producerno == (nproducers + nconsumers - 1)){
+        printf("producer: read EOF, sending %d '-1' numbers\n", nconsumers);
+
+        for (i = 0; i < nconsumers; i++) {
+            insert_data(-1, -1);
+        }
+
+        printf("producer %d: exiting\n", -1);
     }
-
-    printf("producer %d: exiting\n", -1);
-    fflush(stdout);
 }
 
 /*************************************************************************\
@@ -277,17 +260,10 @@ int main(int argc, char *argv[])
 
     #pragma omp parallel
     {
-        #pragma omp single nowait
-        {
-            /* Spawn N Consumer OpenMP Threads */
-            consumer(nproducers, nconsumers);
-        }
-        //#pragma omp section
-        #pragma omp single
-        {
-            /* Spawn N Producer OpenMP Threads */
-            producer(nproducers, nconsumers);
-        }
+        /* Spawn N Consumer OpenMP Threads */
+        consumer(nproducers, nconsumers);
+        /* Spawn N Producer OpenMP Threads */
+        producer(nproducers, nconsumers);
     }
 
     return(0);
