@@ -6,13 +6,19 @@ salloc -N <number_nodes> -A PAS2661 -p gpudebug --gpus-per-node=1 --time=<time_i
 
 salloc -N 1 -A PAS2661 -p gpuserial --gpus-per-node=1 --time=20
 
+salloc -N 1 -A PAS2661 -p gpudebug --gpus-per-node=1 --time=30
+
+
+module load cuda
+module load cuda/10.2.89
+
 
 ulimit -a
 ulimit -c 2048
 
 
 module list
-module load cuda/11.6.1
+
 
 nvidia-smi
 
