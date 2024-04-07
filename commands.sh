@@ -12,7 +12,7 @@ salloc -N 1 -A PAS2661 -p gpudebug --gpus-per-node=1 --time=30
 nvidia-smi
 
 module load cuda
-module load cuda/10.2.89
+module load cuda/12.3.0
 
 
 ulimit -a
