@@ -72,15 +72,15 @@ int main()
     cudaMemcpy(dev_a, a, size, cudaMemcpyHostToDevice);
     cudaMemcpy(dev_b, b, size, cudaMemcpyHostToDevice);
 
-    dim3 dimBlock(prop.maxThreadsPerBlock/wrapSize,wrapSize);
-    dim3 dimGrid((int)ceil(N/dimBlock.x),(int)ceil(N/dimBlock.y));
+    dim3 dimBlock(prop.maxThreadsPerBlock/wrapSize, wrapSize);
+    dim3 dimGrid((int)ceil(N/dimBlock.x), (int)ceil(N/dimBlock.y));
 
     printf("dimBlock.x = %d, dimBlock.y = %d, dimBlock.z = %d\n",
             dimBlock.x, dimBlock.y, dimBlock.z);
     printf("dimGrid.x = %d, dimGrid.y = %d, dimGrid.z = %d\n",
             dimGrid.x, dimGrid.y, dimGrid.z);
 
-    matrixAdd<<<dimGrid,dimBlock>>>(dev_a,dev_b,dev_c);
+    matrixAdd<<<dimGrid, dimBlock>>>(dev_a,dev_b,dev_c);
     cudaCheckErrors("kernel launch failure");
 
     cudaDeviceSynchronize();
