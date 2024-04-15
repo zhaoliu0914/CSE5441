@@ -15,6 +15,8 @@ int update_buffer(char operation, int number) {
 }
 
 int main(int argc, char *argv[]) {
+    printf("sizeof int in bytes = %lu\n", sizeof(int));
+    printf("sizeof float in bytes = %lu\n", sizeof(float));
 
     update_buffer('e', 0);
 

@@ -1,3 +1,4 @@
+/* Copyright (c) 1993-2015, CS Department of OSU. All rights reserved.*/
 #include <stdio.h>
 // these are just for timing measurments
 #include <time.h>
@@ -19,19 +20,28 @@
 /* You should not change the value of DSIZE */
 const int DSIZE = 18432;
 int block_size = 8;
+#define TILE_WIDTH 4
 const float A_val = 3.0f;
 const float B_val = 2.0f;
 
 // matrix multiply (naive) kernel: C = A * B
 __global__ void mmul(const float *A, const float *B, float *C, int ds) {
+  __shared__ float sharedA[TILE_WIDTH][TILE_WIDTH]; // define static shared memory in CUDA
+  __shared__ float sharedB[TILE_WIDTH][TILE_WIDTH]; // define static shared memory in CUDA
   int idx = threadIdx.x + blockDim.x * blockIdx.x;  // create thread x index
   int idy = threadIdx.y + blockDim.y * blockIdx.y;  // create thread y index
 
   if ((idx < ds) && (idy < ds)) {
     float temp = 0;
-    for (int i = 0; i < ds; i++) {
-      temp += A[idy * ds + i]
-          * B[i * ds + idx];   // dot product of row and column
+    for (int i = 0; i < ds / TILE_WIDTH; ++i) {
+        sharedA[threadIdx.y][threadIdx.x] = A[idy * ds + (i * TILE_WIDTH + threadIdx.x)]; // copy value from global memory to shared memory
+        sharedB[threadIdx.y][threadIdx.x] = B[(i * TILE_WIDTH + threadIdx.y) * ds + idx]; // copy value from global memory to shared memory
+        __syncthreads();  // Synchronizes all threads within a block
+
+        for (int k = 0; k < TILE_WIDTH; ++k) {
+            temp += sharedA[threadIdx.y][k] * sharedB[k][threadIdx.x]; // perform inner product within tile/submatrix
+        }
+        __syncthreads();  // Synchronizes all threads within a block
     }
     C[idy * ds + idx] = temp;
   }
@@ -87,7 +97,7 @@ int main(int argc, char *argv[]) {
   // Cuda processing sequence step 1 is complete
 
   // Launch kernel
-  dim3 block(block_size, block_size);  // dim3 variable holds 3 dimensions
+  dim3 block(TILE_WIDTH, TILE_WIDTH);  // dim3 variable holds 3 dimensions
   dim3 grid((DSIZE + block.x - 1) / block.x, (DSIZE + block.y - 1) / block.y);
   mmul<<<grid, block>>>(d_A, d_B, d_C, DSIZE);
   cudaCheckErrors("kernel launch failure");
