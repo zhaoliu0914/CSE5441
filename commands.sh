@@ -8,6 +8,8 @@ salloc -N 1 -A PAS2661 -p gpuserial --gpus-per-node=1 --time=20
 
 salloc -N 1 -A PAS2661 -p gpudebug --gpus-per-node=1 --time=60
 
+srun -N 1 -n 2 -A PAS2661 -p debug --time=60
+
 
 nvidia-smi
 
