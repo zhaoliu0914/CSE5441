@@ -12,15 +12,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int main (int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     int i = 0, n = 10000;
     double x = 0.0;
 
     /* Fork a team of threads giving them their own copies of variables */
 #pragma omp parallel for //lastprivate(x)
     for (i = 0; i < 10000; ++i) {
-        x = i*101*202 + 303*404;
+        x = i * 101 * 202 + 303 * 404;
     }  /* All threads join master thread and disband */
     /* x will have the value computed by which ever thread did the (n-1)th iteration */
 

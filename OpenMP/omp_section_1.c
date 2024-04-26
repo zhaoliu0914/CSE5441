@@ -8,16 +8,16 @@ int main(int argc, char *argv[]) {
 
     omp_set_num_threads(3);
 
-    #pragma omp parallel
+#pragma omp parallel
     {
-        #pragma omp sections
+#pragma omp sections
         {
-            #pragma omp section
+#pragma omp section
             {
                 printf("A \n");
             }
 
-            #pragma omp section
+#pragma omp section
             {
                 printf("B \n");
             }

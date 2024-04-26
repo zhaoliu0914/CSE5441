@@ -12,12 +12,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int main (int argc, char *argv[]){
+int main(int argc, char *argv[]) {
 
     int sum = 0;
 
 #pragma omp parallel for reduction(+:sum)
-    for (int k = 0; k < 10; k++ ) {
+    for (int k = 0; k < 10; k++) {
         sum += k;
 
         printf("k = %d, sum = %d\n", k, sum);

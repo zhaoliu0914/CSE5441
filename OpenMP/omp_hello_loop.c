@@ -12,8 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int main (int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     int i;
     int j;
     int n = 10;
@@ -25,11 +24,11 @@ int main (int argc, char *argv[])
 #pragma omp parallel private(j)
     {
 #pragma omp for
-        for (i=0; i < n; i++) {
+        for (i = 0; i < n; i++) {
             printf("a\n");
         }
 
-        for (j=0; j < n; j++) {
+        for (j = 0; j < n; j++) {
             printf("b\n");
         }
     }

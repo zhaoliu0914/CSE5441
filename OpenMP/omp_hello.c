@@ -12,8 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int main (int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 
     /* Fork a team of threads */
 #pragma omp parallel
@@ -25,8 +24,7 @@ int main (int argc, char *argv[])
         printf("Hello World from thread = %d\n", tid);
 
         /* Only master thread does this */
-        if (tid == 0)
-        {
+        if (tid == 0) {
             nthreads = omp_get_num_threads();
             printf("Number of threads = %d\n", nthreads);
         }

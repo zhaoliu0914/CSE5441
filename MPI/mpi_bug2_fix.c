@@ -1,9 +1,9 @@
 /******************************************************************************
 * FILE: mpi_bug2.c
-* DESCRIPTION: 
+* DESCRIPTION:
 *   This program has a bug that causes wrong answers and/or termination - depends
 *   upon the MPI library and platform.
-* SOURCE: Blaise Barney 
+* SOURCE: Blaise Barney
 * LAST REVISED: 01/24/09
 ******************************************************************************/
 #include "mpi.h"
@@ -12,7 +12,7 @@
 
 int main(int argc, char *argv[]) {
     int numtasks, rank, tag = 1, alpha, i;
-    float beta;
+    int beta;
     MPI_Request reqs[10];
     MPI_Status stats[10];
 
@@ -33,9 +33,9 @@ int main(int argc, char *argv[]) {
 
     if (rank == 1) {
         for (i = 0; i < 10; i++) {
-            MPI_Irecv(&beta, 1, MPI_FLOAT, 0, tag, MPI_COMM_WORLD, &reqs[i]);
+            MPI_Irecv(&beta, 1, MPI_INT, 0, tag, MPI_COMM_WORLD, &reqs[i]);
             MPI_Wait(&reqs[i], &stats[i]);
-            printf("Task %d received = %f\n", rank, beta);
+            printf("Task %d received = %d\n", rank, beta);
         }
     }
 

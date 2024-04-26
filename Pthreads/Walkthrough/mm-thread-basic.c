@@ -11,19 +11,19 @@ long matrix_c[DIM][DIM];
 
 
 void init() {
-    for(int i = 0; i < DIM; i++) {
-        for(int j = 0; j < DIM; j++) {
-            matrix_a[i][j] = i+j;
-            matrix_b[i][j] = i-j;
+    for (int i = 0; i < DIM; i++) {
+        for (int j = 0; j < DIM; j++) {
+            matrix_a[i][j] = i + j;
+            matrix_b[i][j] = i - j;
             matrix_c[i][j] = 0;
         }
     }
 }
 
 void *multiply(void *arg) {
-    for(int i = 0; i < DIM; i++) {
-        for(int j = 0; j < DIM; j++) {
-            for(int k = 0; k < DIM; k++) {
+    for (int i = 0; i < DIM; i++) {
+        for (int j = 0; j < DIM; j++) {
+            for (int k = 0; k < DIM; k++) {
                 matrix_c[i][j] += matrix_a[i][k] * matrix_b[k][j];
             }
         }
@@ -31,9 +31,9 @@ void *multiply(void *arg) {
 }
 
 void print() {
-    FILE *fp = fopen("parallel.txt","w");
-    for(int i = 0; i < DIM; i++) {
-        for(int j = 0; j < DIM; j++) {
+    FILE *fp = fopen("parallel.txt", "w");
+    for (int i = 0; i < DIM; i++) {
+        for (int j = 0; j < DIM; j++) {
             fprintf(fp, "%ld\n", matrix_c[i][j]);
         }
     }

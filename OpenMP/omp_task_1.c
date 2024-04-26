@@ -8,12 +8,12 @@ int main(int argc, char *argv[]) {
 
     omp_set_num_threads(2);
 
-    #pragma omp parallel
+#pragma omp parallel
     {
-        #pragma omp task
+#pragma omp task
         printf("A \n");
 
-        #pragma omp task
+#pragma omp task
         printf("B \n");
     }
 

@@ -2,20 +2,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
 #define NUM_THREADS     8
 char *messages[NUM_THREADS];
 
-struct thread_data
-{
+struct thread_data {
     int thread_id;
-    int  sum;
+    int sum;
     char *message;
 };
 
 struct thread_data thread_data_array[NUM_THREADS];
 
-void *PrintHello(void *threadarg)
-{
+void *PrintHello(void *threadarg) {
     int taskid, sum;
     char *hello_msg;
     struct thread_data *my_data;
@@ -29,13 +28,12 @@ void *PrintHello(void *threadarg)
     pthread_exit(NULL);
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     pthread_t threads[NUM_THREADS];
     int *taskids[NUM_THREADS];
     int rc, t, sum;
 
-    sum=0;
+    sum = 0;
     messages[0] = "English: Hello World!";
     messages[1] = "French: Bonjour, le monde!";
     messages[2] = "Spanish: Hola al mundo";
@@ -45,7 +43,7 @@ int main(int argc, char *argv[])
     messages[6] = "Japan: Sekai e konnichiwa!";
     messages[7] = "Latin: Orbis, te saluto!";
 
-    for(t=0;t<NUM_THREADS;t++) {
+    for (t = 0; t < NUM_THREADS; t++) {
         sum = sum + t;
         thread_data_array[t].thread_id = t;
         thread_data_array[t].sum = sum;

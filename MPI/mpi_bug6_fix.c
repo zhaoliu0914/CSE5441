@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
         }
         if (rank == 1) {
             src = 0;
-            offset = REPS;
+            offset = 0;
         }
         dest = src;
 
@@ -65,6 +65,7 @@ int main(int argc, char *argv[]) {
             if ((i + 1) % DISP == 0)
                 printf("Task %d has done %d isends/irecvs\n", rank, i + 1);
         }
+        MPI_Waitall(nreqs, reqs, stats);
     }
 
     /* Tasks 2 and 3 do the send/irecv test.
@@ -72,6 +73,7 @@ int main(int argc, char *argv[]) {
        operation request handles to capture. offset is where the task should
        store each request as it is captured in the reqs() array.  */
     if (rank > 1) {
+        offset = 0;
         nreqs = REPS;
 
         /* Task 2 does the blocking send operation */
@@ -94,12 +96,12 @@ int main(int argc, char *argv[]) {
                 if ((i + 1) % DISP == 0)
                     printf("Task %d has done %d irecvs\n", rank, i + 1);
             }
+            MPI_Waitall(nreqs, reqs, stats);
         }
 
     }
 
     /* Wait for all non-blocking operations to complete and record time */
-    MPI_Waitall(nreqs, reqs, stats);
     T2 = MPI_Wtime();     /* end time */
     MPI_Barrier(COMM);
 

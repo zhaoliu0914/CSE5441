@@ -1,14 +1,12 @@
 #include<stdio.h>
 #include<cuda.h>
 
-__global__ void mykernel(void)
-{
+__global__ void mykernel(void) {
 }
 
-int main(void)
-{
+int main(void) {
 
-    mykernel<<<1,1>>>();
+    mykernel<<<1, 1>>>();
 
     printf("Hello World\n");
 

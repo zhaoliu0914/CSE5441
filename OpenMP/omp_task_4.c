@@ -7,9 +7,9 @@
 void methodA() {
 
     for (int i = 0; i < 2; i++) {
-        #pragma omp task
+#pragma omp task
         {
-            char* result;
+            char *result;
             char buffer[128];
             bool isContinue = true;
 
@@ -23,9 +23,9 @@ void methodA() {
 void methodB() {
 
     for (int i = 0; i < 2; i++) {
-        #pragma omp task
+#pragma omp task
         {
-            char* result;
+            char *result;
             char buffer[128];
             bool isContinue = true;
 
@@ -34,11 +34,11 @@ void methodB() {
             while (isContinue) {
                 //#pragma omp critical
                 result = fgets(buffer, 128, stdin);
-                if(result != NULL){
+                if (result != NULL) {
                     int number = atoi(buffer);
                     printf("methodB() %d, Input number = %d\n", i, number);
                     sleep(4);
-                }else{
+                } else {
                     printf("methodB() %d, fgets() returns NULL.\n", i);
                     isContinue = false;
                 }
@@ -56,12 +56,12 @@ int main(int argc, char *argv[]) {
     char buffer[128];
     //int number = -1;
 
-    #pragma omp parallel
+#pragma omp parallel
     {
-        #pragma omp single nowait
+#pragma omp single nowait
         methodA();
 
-        #pragma omp single
+#pragma omp single
         methodB();
     }
 

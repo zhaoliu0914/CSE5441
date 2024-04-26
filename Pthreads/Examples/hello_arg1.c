@@ -2,12 +2,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
 #define NUM_THREADS     8
 
 char *messages[NUM_THREADS];
 
-void *PrintHello(void *threadid)
-{
+void *PrintHello(void *threadid) {
     long taskid;
 
     sleep(1);
@@ -16,8 +16,7 @@ void *PrintHello(void *threadid)
     pthread_exit(NULL);
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     pthread_t threads[NUM_THREADS];
     long taskids[NUM_THREADS];
     int rc, t;
@@ -31,7 +30,7 @@ int main(int argc, char *argv[])
     messages[6] = "Japan: Sekai e konnichiwa!";
     messages[7] = "Latin: Orbis, te saluto!";
 
-    for(t=0;t<NUM_THREADS;t++) {
+    for (t = 0; t < NUM_THREADS; t++) {
         taskids[t] = t;
         printf("Creating thread %d\n", t);
         rc = pthread_create(&threads[t], NULL, PrintHello, (void *) taskids[t]);

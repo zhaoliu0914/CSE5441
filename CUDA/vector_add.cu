@@ -1,13 +1,11 @@
 #include<stdio.h>
 #include<cuda.h>
 
-__global__ void add(int *a, int *b, int *c)
-{
+__global__ void add(int *a, int *b, int *c) {
     *c = *a + *b;
 }
 
-int main(void)
-{
+int main(void) {
     /* Host copies of a, b, and c */
     int a = 0, b = 0, c = 0;
     /* Device copies of a, b, and c */
@@ -32,7 +30,7 @@ int main(void)
     cudaMemcpy(d_b, &b, size, cudaMemcpyHostToDevice);
 
     /* Launch kernel for addition */
-    add<<<1,1>>>(d_a, d_b, d_c);
+    add<<<1, 1>>>(d_a, d_b, d_c);
 
     /* Copy result back to the host */
     cudaMemcpy(&c, d_c, size, cudaMemcpyDeviceToHost);

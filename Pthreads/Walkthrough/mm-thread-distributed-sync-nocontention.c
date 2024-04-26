@@ -5,13 +5,13 @@
 
 #define DIM 1000
 
-#define NUM_THREADS 10 
+#define NUM_THREADS 10
 
 long matrix_a[DIM][DIM];
 long matrix_b[DIM][DIM];
 long matrix_c[DIM][DIM];
 
-struct thread_args{
+struct thread_args {
     int start;
     int end;
 };
@@ -19,21 +19,21 @@ struct thread_args{
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 void init() {
-    for(int i = 0; i < DIM; i++) {
-        for(int j = 0; j < DIM; j++) {
-            matrix_a[i][j] = i+j;
-            matrix_b[i][j] = i-j;
+    for (int i = 0; i < DIM; i++) {
+        for (int j = 0; j < DIM; j++) {
+            matrix_a[i][j] = i + j;
+            matrix_b[i][j] = i - j;
             matrix_c[i][j] = 0;
         }
     }
 }
 
 void *multiply(void *arg) {
-    struct thread_args * range = (struct thread_args *) arg;
-    for(int i = 0; i < DIM; i++) {
-        for(int j = 0; j < DIM; j++) {
+    struct thread_args *range = (struct thread_args *) arg;
+    for (int i = 0; i < DIM; i++) {
+        for (int j = 0; j < DIM; j++) {
             long thread_private_tmp = 0;
-            for(int k = range->start; k < range->end; k++) {
+            for (int k = range->start; k < range->end; k++) {
                 thread_private_tmp += matrix_a[i][k] * matrix_b[k][j];
             }
             pthread_mutex_lock(&lock);
@@ -44,9 +44,9 @@ void *multiply(void *arg) {
 }
 
 void print() {
-    FILE *fp = fopen("parallel.txt","w");
-    for(int i = 0; i < DIM; i++) {
-        for(int j = 0; j < DIM; j++) {
+    FILE *fp = fopen("parallel.txt", "w");
+    for (int i = 0; i < DIM; i++) {
+        for (int j = 0; j < DIM; j++) {
             fprintf(fp, "%ld\n", matrix_c[i][j]);
         }
     }
@@ -59,17 +59,17 @@ int main(void) {
     int current_start, range;
     current_start = 0;
     range = DIM / NUM_THREADS;
-    for(int i = 0; i < NUM_THREADS; i++) {
+    for (int i = 0; i < NUM_THREADS; i++) {
         work_ranges[i].start = current_start;
         work_ranges[i].end = current_start + range;
         current_start += range;
     }
-    work_ranges[NUM_THREADS-1].end = DIM;
+    work_ranges[NUM_THREADS - 1].end = DIM;
     init();
-    for(int i = 0; i < NUM_THREADS; i++) {
+    for (int i = 0; i < NUM_THREADS; i++) {
         pthread_create(&child_threads[i], NULL, multiply, &work_ranges[i]);
     }
-    for(int i = 0; i < NUM_THREADS; i++) {
+    for (int i = 0; i < NUM_THREADS; i++) {
         pthread_join(child_threads[i], NULL);
     }
     print();

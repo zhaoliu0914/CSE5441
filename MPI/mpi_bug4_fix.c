@@ -75,6 +75,9 @@ int main(int argc, char *argv[]) {
                      MPI_COMM_WORLD, &status);
         }
 
+        sum = 0;
+        /* Use sum reduction operation to obtain final sum */
+        MPI_Reduce(&mysum, &sum, 1, MPI_DOUBLE, MPI_SUM, MASTER, MPI_COMM_WORLD);
         /* Get final sum and print sample results */
         printf("Sample results: \n");
         offset = 0;

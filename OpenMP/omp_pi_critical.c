@@ -5,13 +5,12 @@
 #define MAX_NTHREADS    8
 
 
-int main (int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     int nthreads;
     long num_steps = 1000000000;
     double pi = 0.0, step = 0.0;
 
-    step = 1.0/(double) num_steps;
+    step = 1.0 / (double) num_steps;
     /* Fork a team of threads giving them their own copies of variables */
 #pragma omp parallel
     {
@@ -33,9 +32,9 @@ int main (int argc, char *argv[])
 
         nthreads = omp_get_num_threads();
         for (i = tid; i < num_steps; i = i + nthrds) {
-            x = (i+0.5)*step;
+            x = (i + 0.5) * step;
 #pragma omp critical
-            pi += 4.0/(1.0+x*x);
+            pi += 4.0 / (1.0 + x * x);
         }
     }  /* All threads join master thread and disband */
     pi *= step;
