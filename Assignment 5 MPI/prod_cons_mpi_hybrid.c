@@ -1,4 +1,6 @@
-/* 
+/* Copyright (c) 1993-2015, CS Department of OSU. All rights reserved.*/
+
+/*
  * This problem has you solve the classic "bounded buffer" problem with
  * multiple producers and multiple consumers:
  *
@@ -36,6 +38,7 @@
 #include <alloca.h>             /* alloca() */
 #include <omp.h>                /* For OpenMP */
 #include <mpi.h>                /* For MPI */
+#include <stdbool.h>
 
 /**************************************************************************\
  *                                                                        *
@@ -70,28 +73,77 @@ int num_procs = -1, myid = -1;
 char hostname[MPI_MAX_PROCESSOR_NAME];
 
 void print_insertion(int producerno, int number, int location) {
-    printf("%s: producer %d on process %d inserting %d at location %d\n", hostname, producerno, myid, number,
-            location);
+    fprintf(stderr, "%s: producer %d on process %d inserting %d at location %d\n",
+            hostname, producerno, myid, number, location);
 }
 
 void print_extraction(int consumerno, int number, int location) {
-    printf("%s: consumer %d on process %d extracting %d from location %d\n", hostname, consumerno, myid, number,
-            location);
+    fprintf(stderr, "%s: consumer %d on process %d extracting %d from location %d\n",
+            hostname, consumerno, myid, number, location);
 }
 
 void insert_data(int producerno, int number) {
-    /* This print must be present in this function. Do not remove this print.
-     * Used for data validation */
-    print_insertion(myid, producerno, number, location);
+    int insertedLocation = -1;
+    bool isContinue = true;
+
+    /* Wait until consumers consumed something from the buffer and there is space */
+    while (isContinue) {
+#pragma omp critical
+        {
+            if (location < MAX_BUF_SIZE) {
+                buffer[location] = number;
+                insertedLocation = location;
+                if (number == -1) {
+                    int index = location;
+                    for (int i = 0; i <= location; i++) {
+                        int temp = buffer[i];
+                        if (temp > 0) {
+                            index = i;
+                            break;
+                        }
+                    }
+                    insertedLocation = index;
+                    int temp = buffer[index];
+                    buffer[index] = buffer[location];
+                    buffer[location] = temp;
+                }
+                location++;
+                isContinue = false;
+            }
+        }
+        if (isContinue) {
+            usleep(100);
+        }
+    }
+
+    /* Put data in the buffer */
+
+    print_insertion(producerno, number, insertedLocation);
 }
 
 int extract_data(int consumerno) {
+    int done = 0;
     int value = -1;
+    int extractedLocation = -1;
 
-    /* This print must be present in this function. Do not remove this print.
-     * Used for data validation */
-    print_extraction(myid, consumerno, value, location);
+    /* Wait until producers have put something in the buffer */
+    bool isContinue = true;
+    while (isContinue) {
+#pragma omp critical
+        {
+            if (location > 0) {
+                location--;
+                value = buffer[location];
+                isContinue = false;
+                extractedLocation = location;
+            }
+        }
+        if (isContinue) {
+            usleep(100);
+        }
+    }
 
+    print_extraction(consumerno, value, extractedLocation);
     return value;
 }
 
@@ -112,18 +164,19 @@ void consumer(int nproducers, int nconsumers) {
     int number = -1;
     int consumerno = -1;
 
-    {
+    consumerno = omp_get_thread_num();
+    if (consumerno < nconsumers) {
+        fprintf(stderr, "consumer %d: starting\n", consumerno);
         while (1) {
             number = extract_data(consumerno);
 
-            /* Do not remove this print. Used for data validation */
             if (number < 0)
                 break;
 
-            usleep(10 * number);
-            // usleep(100000 * number);
-            fflush(stdout);
+            //usleep(10 * number);  /* "interpret" command for development */
+            usleep(100000 * number);  /* "interpret" command for submission */
         }
+        fprintf(stderr, "consumer %d: exiting\n", consumerno);
     }
 
     return;
@@ -140,14 +193,66 @@ void consumer(int nproducers, int nconsumers) {
 #define MAXLINELEN 128
 
 void producer(int nproducers, int nconsumers) {
-    int number, producerno;
-    char tmp_buffer[MAXLINELEN];
+    /* Thread number */
+    int producerno = -1;
+    char buffer[MAXLINELEN];
+    int number = -1;
+    int source = 0;
+    int tag = 100;
+    int rc;
+    MPI_Status Stat;
 
-    {
-        while (fgets(tmp_buffer, MAXLINELEN, stdin) != NULL) {
-            number = atoi(tmp_buffer);
-            insert_data(producerno, number);
+    producerno = omp_get_thread_num();
+    if (producerno >= nconsumers) {
+        fprintf(stderr, "producer %d: starting\n", producerno);
+
+        if (myid == 0) {
+            while (fgets(buffer, MAXLINELEN, stdin) != NULL) {
+                number = atoi(buffer);
+
+                int destination = rand() % nproducers;
+                if (destination == 0) {
+                    insert_data(producerno, number);
+                } else {
+                    //fprintf(stderr, "producer: Process %d Thread %d send [%d] to %d\n", myid,  producerno, number, destination);
+                    rc = MPI_Send(&number, 1, MPI_INT, destination, tag, MPI_COMM_WORLD);
+                }
+            }
+#pragma omp master
+            {
+                number = -1;
+                for (int i = 0; i < nproducers; i++) {
+                    for (int j = 0; j < num_procs; ++j) {
+                        rc = MPI_Send(&number, 1, MPI_INT, j, tag, MPI_COMM_WORLD);
+                    }
+                    //fprintf(stderr, "producer: Process %d Thread %d send [%d] to %d\n", myid, producerno, number, i);
+                }
+            }
+
+        } else {
+            while (number != -1) {
+                rc = MPI_Recv(&number, 1, MPI_INT, source, tag, MPI_COMM_WORLD, &Stat);
+                //fprintf(stderr, "producer: Process %d Thread %d receive [%d] from %d\n", myid, producerno, number, source);
+                insert_data(producerno, number);
+            }
+
         }
+
+        fprintf(stderr, "producer %d: exiting\n", producerno);
+    }
+
+    /* For simplicity, you can make it so that only one producer inserts the
+     * "-1" to all the consumers. However, if you are able to create a logic to
+     * distribute this among the producer threads, that is also fine. */
+
+    if (producerno == (nproducers + nconsumers - 1)) {
+        fprintf(stderr, "producer: read EOF, sending %d '-1' numbers\n", nconsumers);
+
+        for (int i = 0; i < nconsumers; i++) {
+            insert_data(-1, -1);
+        }
+
+        fprintf(stderr, "producer %d: exiting\n", -1);
     }
 }
 
@@ -178,18 +283,30 @@ int main(int argc, char *argv[]) {
 
     /***** MPI Initializations - get rank, comm_size and hostame - refer to
      * bugs/examples for necessary code *****/
+    fprintf(stderr, "Start MPI_Init().......\n");
+    MPI_Init(&argc, &argv);
+    fprintf(stderr, "Finish MPI_Init().......\n");
+    MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+
     if (num_procs > MAX_NUM_PROCS) {
         fprintf(stderr, "Error: Max num procs should <= 5\n");
         exit(1);
     }
 
-    printf("main: nproducers = %d, nconsumers = %d\n", nproducers, nconsumers);
+    fprintf(stderr, "main: nproducers = %d, nconsumers = %d\n", nproducers, nconsumers);
 
-    /* Spawn N Consumer OpenMP Threads */
-    consumer(nproducers, nconsumers);
-    /* Spawn N Producer OpenMP Threads */
-    producer(nproducers, nconsumers);
+    omp_set_num_threads(nproducers + nconsumers);
+
+#pragma omp parallel
+    {
+        /* Spawn N Consumer OpenMP Threads */
+        consumer(nproducers, nconsumers);
+        /* Spawn N Producer OpenMP Threads */
+        producer(nproducers, nconsumers);
+    }
 
     /* Finalize and cleanup */
-    return(0);
+    MPI_Finalize();
+    return (0);
 }
