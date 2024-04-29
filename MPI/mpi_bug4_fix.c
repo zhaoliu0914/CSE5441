@@ -71,8 +71,7 @@ int main(int argc, char *argv[]) {
         for (i = 1; i < numtasks; i++) {
             source = i;
             MPI_Recv(&offset, 1, MPI_INT, source, tag1, MPI_COMM_WORLD, &status);
-            MPI_Recv(&data[offset], chunksize, MPI_DOUBLE, source, tag2,
-                     MPI_COMM_WORLD, &status);
+            MPI_Recv(&data[offset], chunksize, MPI_DOUBLE, source, tag2, MPI_COMM_WORLD, &status);
         }
 
         sum = 0;
@@ -100,8 +99,7 @@ int main(int argc, char *argv[]) {
         /* Receive my portion of array from the master task */
         source = MASTER;
         MPI_Recv(&offset, 1, MPI_INT, source, tag1, MPI_COMM_WORLD, &status);
-        MPI_Recv(&data[offset], chunksize, MPI_DOUBLE, source, tag2,
-                 MPI_COMM_WORLD, &status);
+        MPI_Recv(&data[offset], chunksize, MPI_DOUBLE, source, tag2, MPI_COMM_WORLD, &status);
 
         /* Do my part of the work */
         mysum = update(offset, chunksize, taskid);

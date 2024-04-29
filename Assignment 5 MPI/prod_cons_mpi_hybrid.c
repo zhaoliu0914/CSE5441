@@ -73,12 +73,12 @@ int num_procs = -1, myid = -1;
 char hostname[MPI_MAX_PROCESSOR_NAME];
 
 void print_insertion(int producerno, int number, int location) {
-    fprintf(stderr, "%s: producer %d on process %d inserting %d at location %d\n",
+    printf("%s: producer %d on process %d inserting %d at location %d\n",
             hostname, producerno, myid, number, location);
 }
 
 void print_extraction(int consumerno, int number, int location) {
-    fprintf(stderr, "%s: consumer %d on process %d extracting %d from location %d\n",
+    printf("%s: consumer %d on process %d extracting %d from location %d\n",
             hostname, consumerno, myid, number, location);
 }
 
@@ -166,7 +166,7 @@ void consumer(int nproducers, int nconsumers) {
 
     consumerno = omp_get_thread_num();
     if (consumerno < nconsumers) {
-        fprintf(stderr, "consumer %d: starting\n", consumerno);
+        printf("consumer %d: starting\n", consumerno);
         while (1) {
             number = extract_data(consumerno);
 
@@ -176,7 +176,7 @@ void consumer(int nproducers, int nconsumers) {
             //usleep(10 * number);  /* "interpret" command for development */
             usleep(100000 * number);  /* "interpret" command for submission */
         }
-        fprintf(stderr, "consumer %d: exiting\n", consumerno);
+        printf("consumer %d: exiting\n", consumerno);
     }
 
     return;
@@ -204,7 +204,7 @@ void producer(int nproducers, int nconsumers) {
 
     producerno = omp_get_thread_num();
     if (producerno >= nconsumers) {
-        fprintf(stderr, "producer %d: starting\n", producerno);
+        printf("producer %d: starting\n", producerno);
 
         if (myid == 0) {
             while (fgets(buffer, MAXLINELEN, stdin) != NULL) {
@@ -214,7 +214,7 @@ void producer(int nproducers, int nconsumers) {
                 if (destination == 0) {
                     insert_data(producerno, number);
                 } else {
-                    //fprintf(stderr, "producer: Process %d Thread %d send [%d] to %d\n", myid,  producerno, number, destination);
+                    //printf("producer: Process %d Thread %d send [%d] to %d\n", myid,  producerno, number, destination);
                     rc = MPI_Send(&number, 1, MPI_INT, destination, tag, MPI_COMM_WORLD);
                 }
             }
@@ -225,20 +225,20 @@ void producer(int nproducers, int nconsumers) {
                     for (int j = 0; j < num_procs; ++j) {
                         rc = MPI_Send(&number, 1, MPI_INT, j, tag, MPI_COMM_WORLD);
                     }
-                    //fprintf(stderr, "producer: Process %d Thread %d send [%d] to %d\n", myid, producerno, number, i);
+                    //printf("producer: Process %d Thread %d send [%d] to %d\n", myid, producerno, number, i);
                 }
             }
 
         } else {
             while (number != -1) {
                 rc = MPI_Recv(&number, 1, MPI_INT, source, tag, MPI_COMM_WORLD, &Stat);
-                //fprintf(stderr, "producer: Process %d Thread %d receive [%d] from %d\n", myid, producerno, number, source);
+                //printf("producer: Process %d Thread %d receive [%d] from %d\n", myid, producerno, number, source);
                 insert_data(producerno, number);
             }
 
         }
 
-        fprintf(stderr, "producer %d: exiting\n", producerno);
+        printf("producer %d: exiting\n", producerno);
     }
 
     /* For simplicity, you can make it so that only one producer inserts the
@@ -246,13 +246,13 @@ void producer(int nproducers, int nconsumers) {
      * distribute this among the producer threads, that is also fine. */
 
     if (producerno == (nproducers + nconsumers - 1)) {
-        fprintf(stderr, "producer: read EOF, sending %d '-1' numbers\n", nconsumers);
+        printf("producer: read EOF, sending %d '-1' numbers\n", nconsumers);
 
         for (int i = 0; i < nconsumers; i++) {
             insert_data(-1, -1);
         }
 
-        fprintf(stderr, "producer %d: exiting\n", -1);
+        printf("producer %d: exiting\n", -1);
     }
 }
 
@@ -276,25 +276,25 @@ int main(int argc, char *argv[]) {
         nproducers = atoi(argv[1]);
         nconsumers = atoi(argv[2]);
         if (nproducers <= 0 || nconsumers <= 0) {
-            fprintf(stderr, "Error: nproducers & nconsumers should be >= 1\n");
+            printf("Error: nproducers & nconsumers should be >= 1\n");
             exit(1);
         }
     }
 
     /***** MPI Initializations - get rank, comm_size and hostame - refer to
      * bugs/examples for necessary code *****/
-    fprintf(stderr, "Start MPI_Init().......\n");
+    printf("Start MPI_Init().......\n");
     MPI_Init(&argc, &argv);
-    fprintf(stderr, "Finish MPI_Init().......\n");
+    printf("Finish MPI_Init().......\n");
     MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
     MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
     if (num_procs > MAX_NUM_PROCS) {
-        fprintf(stderr, "Error: Max num procs should <= 5\n");
+        printf("Error: Max num procs should <= 5\n");
         exit(1);
     }
 
-    fprintf(stderr, "main: nproducers = %d, nconsumers = %d\n", nproducers, nconsumers);
+    printf("main: nproducers = %d, nconsumers = %d\n", nproducers, nconsumers);
 
     omp_set_num_threads(nproducers + nconsumers);
 

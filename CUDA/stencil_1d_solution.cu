@@ -3,7 +3,7 @@
 
 using namespace std;
 
-#define N 4096
+#define N 32
 #define RADIUS 3
 #define BLOCK_SIZE 16
 
@@ -12,9 +12,13 @@ __global__ void stencil_1d(int *in, int *out) {
     int gindex = threadIdx.x + blockIdx.x * blockDim.x;
     int lindex = threadIdx.x + RADIUS;
 
+    printf("blockIdx.x = %d, threadIdx.x = %d, gindex = %d, lindex = %d\n", blockIdx.x, threadIdx.x, gindex, lindex);
+
     // Read input elements into shared memory
     temp[lindex] = in[gindex];
     if (threadIdx.x < RADIUS) {
+        printf("blockIdx.x = %d, threadIdx.x = %d, gindex = %d, lindex = %d, in[gindex - RADIUS] = %d\n", blockIdx.x, threadIdx.x, gindex, lindex, in[gindex - RADIUS]);
+
         temp[lindex - RADIUS] = in[gindex - RADIUS];
         temp[lindex + BLOCK_SIZE] = in[gindex + BLOCK_SIZE];
     }

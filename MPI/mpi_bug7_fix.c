@@ -25,7 +25,12 @@ int main(int argc, char *argv[]) {
     if (taskid == root)
         printf("Root: Number of MPI tasks is: %d\n", numtasks);
 
+    if(taskid == root){
+        buffer = 100;
+    }
     MPI_Bcast(&buffer, count, MPI_INT, root, MPI_COMM_WORLD);
+
+    printf("Results: buffer = %d\n", buffer);
 
 
     MPI_Finalize();
